@@ -320,8 +320,6 @@ fam_index %>% summarise(gps_mean = mean(gps_indx), fld_mean = mean(fld_indx))%>%
 
 ####----(3) How many agreements/ disagreements are there between the data----####
 pres_abs$identification <- paste0(pres_abs$presence_field,"-", pres_abs$presence_gps)
-ggplot(pres_abs, aes(x = identification)) + geom_bar()
-
 total_identification <- as.numeric(nrow(pres_abs))
 
 agreements <- pres_abs %>% group_by(identification) %>% tally() %>% group_by(identification) %>%
@@ -329,7 +327,38 @@ agreements <- pres_abs %>% group_by(identification) %>% tally() %>% group_by(ide
 
 agreements$agree <- c("agree", "disagree", "disagree", "agree")
 
+#Percent
 agreements %>% group_by(agree) %>% summarise(percent = sum(percent))
+
+#' Disagreement-only comparison between field and GPS data
+
+total_disagree <- as.numeric(nrow(pres_abs %>% filter(identification == "absent-present" |
+                                                        identification == "present-absent")))
+
+pres_abs %>% filter(identification == "absent-present" |
+                      identification == "present-absent") %>% 
+  group_by(identification) %>% tally() %>% group_by(identification) %>% 
+  summarise(percent = n*100/total_disagree)
+#' identification as 'field-gps'
+#' first row: % of times field has recorded absent when gps recorded present
+#' second row: % of times field has recorded present when gps recorded absent
+
+pres_abs_melt <-pres_abs %>% filter(identification == "absent-present" |
+                                      identification == "present-absent") %>%
+  select(local_identifier, presence_gps, presence_field)%>%
+  melt(id=c("local_identifier"))
+
+ggplot(pres_abs_melt, aes(x = value, fill = variable))+ 
+  geom_bar(position=position_fill(reverse=F))+
+  ylab("Proportion")+
+  xlab("Presence") +
+  theme_classic() + 
+  theme(
+    axis.title.y = element_text(color =" black", size=12),
+    axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 11, angle = 90, hjust = 1),
+    axis.text.y = element_text(size = 11)
+  )
 #------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
